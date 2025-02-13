@@ -65,6 +65,27 @@ function migrate (value, version, migrations) {
 function getAll (schema) {
   return [
     {
+      release: '10.1.6',
+      version: 25,
+      previous: 24,
+      install: [
+        `
+        ALTER TABLE ${schema}.schedule DROP CONSTRAINT schedule_name_fkey;
+        ALTER TABLE ${schema}.schedule ADD COLUMN queue text;
+        UPDATE ${schema}.schedule SET queue = name;
+        ALTER TABLE ${schema}.schedule ALTER COLUMN queue SET NOT NULL;
+        ALTER TABLE ${schema}.schedule ADD CONSTRAINT schedule_queue_fkey FOREIGN KEY (queue) REFERENCES ${schema}.queue (name) ON DELETE CASCADE;
+        `
+      ],
+      uninstall: [
+        `
+        ALTER TABLE ${schema}.schedule DROP CONSTRAINT schedule_queue_fkey;
+        ALTER TABLE ${schema}.schedule DROP COLUMN queue;
+        ALTER TABLE ${schema}.schedule ADD CONSTRAINT schedule_name_fkey FOREIGN KEY (name) REFERENCES ${schema}.queue (name) ON DELETE CASCADE;
+        `
+      ]
+    },
+    {
       release: '10.1.5',
       version: 24,
       previous: 23,

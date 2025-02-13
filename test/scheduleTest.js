@@ -48,6 +48,28 @@ describe('schedule', function () {
     assert.strictEqual(job.retryLimit, 42)
   })
 
+  it('should allow multiple schedules per queue', async function () {
+    const config = {
+      ...this.test.bossConfig,
+      cronMonitorIntervalSeconds: 1,
+      cronWorkerIntervalSeconds: 1,
+      schedule: true
+    }
+
+    const boss = this.test.boss = await helper.start(config)
+    const queue = this.test.bossConfig.schema
+
+    await boss.schedule('custom-schedule-1', '* * * * *', { custom: '1' }, { queue })
+    await boss.schedule('custom-schedule-2', '* * * * *', { custom: '2' }, { queue })
+
+    await delay(4000)
+
+    const items = await boss.fetch(queue, { includeMetadata: true, batchSize: 10 })
+
+    assert(items.some(item => item.data.custom === '1'))
+    assert(items.some(item => item.data.custom === '2'))
+  })
+
   it('should fail to schedule a queue that does not exist', async function () {
     const boss = this.test.boss = await helper.start({ ...this.test.bossConfig, noDefault: true })
     const queue = this.test.bossConfig.schema
