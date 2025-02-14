@@ -119,7 +119,7 @@ declare namespace PgBoss {
 
   type Queue = RetryOptions & ExpirationOptions & RetentionOptions & { name: string, policy?: QueuePolicy, deadLetter?: string }
   type QueueResult = Queue & { createdOn: Date, updatedOn: Date }
-  type ScheduleOptions = SendOptions & { tz?: string }
+  type ScheduleOptions = SendOptions & { tz?: string; queue?: string }
 
   interface JobPollingOptions {
     pollingIntervalSeconds?: number;
@@ -150,6 +150,7 @@ declare namespace PgBoss {
 
   interface Schedule {
     name: string;
+    queue: string;
     cron: string;
     data?: object;
     options?: ScheduleOptions;
@@ -365,7 +366,7 @@ declare class PgBoss extends EventEmitter {
 
   schedule(name: string, cron: string, data?: object, options?: PgBoss.ScheduleOptions): Promise<void>;
   unschedule(name: string): Promise<void>;
-  getSchedules(): Promise<PgBoss.Schedule[]>;
+  getSchedules(queue?: string): Promise<PgBoss.Schedule[]>;
 }
 
 export = PgBoss;

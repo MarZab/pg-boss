@@ -39,7 +39,7 @@ Schedules a job to be sent to the specified queue based on a cron expression. If
 - `data`: object
 - `options`: object
 
-`options` supports all properties in `send()` and an optional `tz` property that specifies a time zone name. If not specified, the default is UTC.
+`options` supports all properties in `send()`, an optional `tz` property that specifies a time zone name ( If not specified, the default is UTC ), and a `queue` property that defines the queue to send the job to ( the default is the name of the schedule).
 
 For example, the following code will send a job at 3:00am in the US central time zone into the queue `notification-abc`.
 

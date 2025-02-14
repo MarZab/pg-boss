@@ -143,8 +143,8 @@ class Timekeeper extends EventEmitter {
 
     const scheduled = schedules
       .filter(i => this.shouldSendIt(i.cron, i.timezone))
-      .map(({ name, data, options }) =>
-        ({ name: QUEUES.SEND_IT, data: { name, data, ...options }, singletonKey: name, singletonSeconds: 60 }))
+      .map(({ name, queue, data, options }) =>
+        ({ name: QUEUES.SEND_IT, data: { name: queue, data, ...options }, singletonKey: name, singletonSeconds: 60 }))
 
     if (scheduled.length > 0 && !this.stopped) {
       await this.manager.insert(scheduled)
@@ -170,18 +170,19 @@ class Timekeeper extends EventEmitter {
 
   async schedule (name, cron, data, options = {}) {
     const { tz = 'UTC' } = options
+    const { queue = name, ...rest } = options
 
     cronParser.parseExpression(cron, { tz })
 
     Attorney.checkSendArgs([name, data, options], this.config)
 
-    const values = [name, cron, tz, data, options]
+    const values = [name, queue, cron, tz, data, rest]
 
     try {
       await this.db.executeSql(this.scheduleCommand, values)
     } catch (err) {
       if (err.message.includes('foreign key')) {
-        err.message = `Queue ${name} not found`
+        err.message = `Queue ${queue} not found`
       }
 
       throw err

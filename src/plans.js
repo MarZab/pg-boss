@@ -148,7 +148,8 @@ function createTableQueue (schema) {
 function createTableSchedule (schema) {
   return `
     CREATE TABLE ${schema}.schedule (
-      name text REFERENCES ${schema}.queue ON DELETE CASCADE,
+      name text not null,
+      queue text REFERENCES ${schema}.queue ON DELETE CASCADE,
       cron text not null,
       timezone text,
       data jsonb,
@@ -433,16 +434,20 @@ function getQueueSize (schema, options = {}) {
   return `SELECT count(*) as count FROM ${schema}.job WHERE name = $1 AND state < '${options.before}'`
 }
 
-function getSchedules (schema) {
+function getSchedules (schema, queue) {
+  if (queue) {
+    return `SELECT * FROM ${schema}.schedule WHERE queue = $1`
+  }
   return `SELECT * FROM ${schema}.schedule`
 }
 
 function schedule (schema) {
   return `
-    INSERT INTO ${schema}.schedule (name, cron, timezone, data, options)
-    VALUES ($1, $2, $3, $4, $5)
+    INSERT INTO ${schema}.schedule (name, queue, cron, timezone, data, options)
+    VALUES ($1, $2, $3, $4, $5, $6)
     ON CONFLICT (name) DO UPDATE SET
       cron = EXCLUDED.cron,
+      queue = EXCLUDED.queue,
       timezone = EXCLUDED.timezone,
       data = EXCLUDED.data,
       options = EXCLUDED.options,
